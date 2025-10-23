@@ -380,113 +380,33 @@
         let dailyChart = null;
 
         // Load and parse CSV
+        // This function is overridden by Hammerspoon when opening via Cmd+Shift+Esc
+        // Hammerspoon injects the CSV data directly into the page
         async function loadData() {
-            try {
-                // Try to load from file system
-                let text;
-                try {
-                    const response = await fetch('../time_tracking.csv');
-                    text = await response.text();
-                } catch (fetchError) {
-                    // If fetch fails, show instructions
-                    showError('Cannot load CSV file directly from browser. Please use one of these options:<br>' +
-                             '1. Run: <code>cd ~/.hammerspoon && python3 -m http.server 8000</code><br>' +
-                             '2. Then open: <code>http://localhost:8000/dashboard/index.html</code><br><br>' +
-                             'Or drag and drop your time_tracking.csv file here →');
-                    setupFileDrop();
-                    return;
-                }
-                
-                const lines = text.split('\n').filter(line => line.trim());
-                
-                // Skip header
-                const dataLines = lines.slice(1);
-                
-                allData = dataLines.map(line => {
-                    const parts = parseCSVLine(line);
-                    // Handle both old format (5 cols) and new format (4 cols)
-                    if (parts.length >= 4) {
-                        // New format: Start,End,Duration,Path,Description
-                        if (parts.length === 5) {
-                            return {
-                                startTime: parts[0],
-                                endTime: parts[1],
-                                duration: parseInt(parts[2]) || 0,
-                                path: parts[3],
-                                description: parts[4] || ''
-                            };
-                        }
-                        // Old format with Group,Subgroup columns
-                        else if (parts.length === 6) {
-                            const path = parts[3] + (parts[4] ? '::' + parts[4] : '');
-                            return {
-                                startTime: parts[0],
-                                endTime: parts[1],
-                                duration: parseInt(parts[2]) || 0,
-                                path: path,
-                                description: parts[5] || ''
-                            };
-                        }
-                    }
-                    return null;
-                }).filter(d => d !== null);
-
-                filteredData = [...allData];
-                updateDashboard();
-                populateGroupFilter();
-            } catch (error) {
-                showError('Failed to load data: ' + error.message);
-                console.error('Error loading data:', error);
-            }
+            showError('⚠️ This dashboard should be opened via Hammerspoon (Cmd+Shift+Esc), not directly in browser.');
         }
         
-        function setupFileDrop() {
-            const dropZone = document.body;
+        // Removed: setupFileDrop - not needed since Hammerspoon injects data directly
+
+        // Generate distinct colors using HSL - ensures no duplicates
+        function generateDistinctColors(count) {
+            const colors = [];
+            const goldenRatio = 0.618033988749895;
+            let hue = Math.random(); // Start with random hue
             
-            dropZone.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                dropZone.style.background = '#1a1a1a';
-            });
-            
-            dropZone.addEventListener('dragleave', (e) => {
-                e.preventDefault();
-                dropZone.style.background = '';
-            });
-            
-            dropZone.addEventListener('drop', (e) => {
-                e.preventDefault();
-                dropZone.style.background = '';
+            for (let i = 0; i < count; i++) {
+                hue += goldenRatio;
+                hue %= 1;
                 
-                const file = e.dataTransfer.files[0];
-                if (file && file.name.endsWith('.csv')) {
-                    const reader = new FileReader();
-                    reader.onload = (event) => {
-                        const text = event.target.result;
-                        const lines = text.split('\n').filter(line => line.trim());
-                        const dataLines = lines.slice(1);
-                        
-                        allData = dataLines.map(line => {
-                            const parts = parseCSVLine(line);
-                            if (parts.length >= 5) {
-                                return {
-                                    startTime: parts[0],
-                                    endTime: parts[1],
-                                    duration: parseInt(parts[2]) || 0,
-                                    path: parts[3],
-                                    description: parts[4] || ''
-                                };
-                            }
-                            return null;
-                        }).filter(d => d !== null);
-                        
-                        filteredData = [...allData];
-                        document.getElementById('error-container').innerHTML = '';
-                        updateDashboard();
-                        populateGroupFilter();
-                    };
-                    reader.readAsText(file);
-                }
-            });
+                // Use high saturation and medium lightness for vibrant colors
+                const h = Math.floor(hue * 360);
+                const s = 65 + Math.random() * 10; // 65-75%
+                const l = 55 + Math.random() * 10; // 55-65%
+                
+                colors.push(`hsl(${h}, ${s}%, ${l}%)`);
+            }
+            
+            return colors;
         }
 
         function parseCSVLine(line) {
@@ -581,10 +501,7 @@
                     labels: sorted.map(([name]) => name),
                     datasets: [{
                         data: sorted.map(([, time]) => (time / 60).toFixed(1)),
-                        backgroundColor: [
-                            '#737373', '#525252', '#404040', '#a3a3a3', '#262626',
-                            '#8c8c8c', '#595959', '#6b6b6b', '#4d4d4d', '#7a7a7a'
-                        ]
+                        backgroundColor: generateDistinctColors(sorted.length)
                     }]
                 },
                 options: {
@@ -633,7 +550,7 @@
                     datasets: [{
                         label: 'Hours',
                         data: last7Days.map(day => (dailyTime[day] / 60).toFixed(1)),
-                        backgroundColor: '#737373',
+                        backgroundColor: '#3b82f6',
                         borderRadius: 6
                     }]
                 },

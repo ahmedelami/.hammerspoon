@@ -41,7 +41,6 @@ obj.markedForDeletion = {}
 obj.hotkey = {{"cmd"}, "escape"}
 obj.dashboardHotkey = {{"cmd", "shift"}, "escape"}
 obj.dashboardTemplatePath = hs.spoons.scriptPath() .. "/dashboard/index.html"
-obj.dashboardTempPath = hs.spoons.scriptPath() .. "/dashboard/temp_dashboard.html"
 
 -- ============== UTILITIES ==============
 
@@ -337,8 +336,8 @@ function obj:openDashboard()
     local csvData = csvFile:read("*all")
     csvFile:close()
     
-    -- Escape the CSV data for JavaScript
-    csvData = csvData:gsub("\\", "\\\\"):gsub("`", "\\`"):gsub("$", "\\$")
+    -- Escape the CSV data for JavaScript (only backticks and backslashes)
+    csvData = csvData:gsub("\\", "\\\\"):gsub("`", "\\`")
     
     -- Read the template HTML
     local templateFile = io.open(self.dashboardTemplatePath, "r")
@@ -350,26 +349,39 @@ function obj:openDashboard()
     local htmlContent = templateFile:read("*all")
     templateFile:close()
     
-    -- Replace the fetch call with embedded data
-    local injectedScript = [[
-        // Embedded CSV data
-        const csvData = `]] .. csvData .. [[`;
+    -- Inject CSV data and override loadData function
+    local injectedScript = [[<script>
+        // Embedded CSV data - injected by Hammerspoon
+        const EMBEDDED_CSV_DATA = `]] .. csvData .. [[`;
         
-        // Load data immediately from embedded CSV
-        async function loadData() {
+        // Prevent the original loadData from running
+        window.loadData = async function() { /* Overridden by Hammerspoon */ };
+        
+        // Load embedded data immediately
+        window.addEventListener('DOMContentLoaded', async function() {
             try {
-                const lines = csvData.split('\n').filter(line => line.trim());
+                const text = EMBEDDED_CSV_DATA;
+                const lines = text.split('\n').filter(line => line.trim());
                 const dataLines = lines.slice(1);
                 
                 allData = dataLines.map(line => {
                     const parts = parseCSVLine(line);
-                    if (parts.length >= 5) {
+                    if (parts.length === 5) {
                         return {
                             startTime: parts[0],
                             endTime: parts[1],
                             duration: parseInt(parts[2]) || 0,
                             path: parts[3],
                             description: parts[4] || ''
+                        };
+                    } else if (parts.length === 6) {
+                        const path = parts[3] + (parts[4] ? '::' + parts[4] : '');
+                        return {
+                            startTime: parts[0],
+                            endTime: parts[1],
+                            duration: parseInt(parts[2]) || 0,
+                            path: path,
+                            description: parts[5] || ''
                         };
                     }
                     return null;
@@ -379,17 +391,18 @@ function obj:openDashboard()
                 updateDashboard();
                 populateGroupFilter();
             } catch (error) {
-                showError('Failed to load data: ' + error.message);
-                console.error('Error loading data:', error);
+                showError('Failed to load embedded data: ' + error.message);
+                console.error('Error loading embedded data:', error);
             }
-        }
-    ]]
+        });
+    </script>]]
     
-    -- Replace the original loadData function
-    htmlContent = htmlContent:gsub("async function loadData%(%)[^}]+}.-setupFileDrop%([^)]*%).-}", injectedScript)
+    -- Insert the embedded data and script right before </body> tag
+    htmlContent = htmlContent:gsub("(</body>)", injectedScript .. "\n%1")
     
-    -- Write the temp file
-    local tempFile = io.open(self.dashboardTempPath, "w")
+    -- Write to temp file (simpler and more reliable than data: URL)
+    local tempPath = os.tmpname() .. ".html"
+    local tempFile = io.open(tempPath, "w")
     if not tempFile then
         hs.alert.show("⚠️ Could not create dashboard")
         return
@@ -399,7 +412,7 @@ function obj:openDashboard()
     tempFile:close()
     
     -- Open in browser
-    hs.execute("open '" .. self.dashboardTempPath .. "'")
+    hs.execute("open '" .. tempPath .. "'")
     hs.alert.show("📊 Opening dashboard...")
 end
 
