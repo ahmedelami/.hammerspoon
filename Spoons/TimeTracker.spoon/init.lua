@@ -40,8 +40,8 @@ obj.markedForDeletion = {}
 -- Configurable options
 obj.hotkey = {{"cmd"}, "escape"}
 obj.dashboardHotkey = {{"cmd", "shift"}, "escape"}
-obj.dashboardTemplatePath = os.getenv("HOME") .. "/.hammerspoon/dashboard/index.html"
-obj.dashboardTempPath = os.getenv("HOME") .. "/.hammerspoon/dashboard/temp_dashboard.html"
+obj.dashboardTemplatePath = hs.spoons.scriptPath() .. "/dashboard/index.html"
+obj.dashboardTempPath = hs.spoons.scriptPath() .. "/dashboard/temp_dashboard.html"
 
 -- ============== UTILITIES ==============
 
