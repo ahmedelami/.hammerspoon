@@ -1,0 +1,5 @@
+# Environment variables with secrets
+.env
+
+# Hammerspoon console log
+console.log

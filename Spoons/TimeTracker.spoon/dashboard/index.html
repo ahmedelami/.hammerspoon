@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time Tracker Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #171717;
+            --bg-tertiary: #262626;
+            --text-primary: #fafafa;
+            --text-secondary: #a3a3a3;
+            --accent: #404040;
+            --accent-hover: #525252;
+            --success: #525252;
+            --border: #262626;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            padding: 2rem;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--bg-secondary);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent);
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .stat-subtext {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-top: 0.25rem;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-card {
+            background: var(--bg-secondary);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .chart-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        .filters {
+            background: var(--bg-secondary);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            margin-bottom: 2rem;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .filter-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        input, select {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            transition: border-color 0.2s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        button {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: var(--accent-hover);
+        }
+
+        .table-container {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .table-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .table-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: var(--bg-tertiary);
+        }
+
+        th {
+            padding: 1rem;
+            text-align: left;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 1rem;
+            border-top: 1px solid var(--border);
+            font-size: 0.9rem;
+        }
+
+        tbody tr {
+            transition: background 0.2s;
+        }
+
+        tbody tr:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 4rem;
+            color: var(--text-secondary);
+        }
+
+        .error {
+            background: #991b1b;
+            color: #fecaca;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+        }
+
+        .search-input {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .filters {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .search-input {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⏱ Time Tracker Dashboard</h1>
+            <p class="subtitle">Track your productivity and analyze time spent on projects</p>
+        </header>
+
+        <div id="error-container"></div>
+        
+        <div class="filters">
+            <div class="filter-group">
+                <label class="filter-label">Search</label>
+                <input type="text" id="search" class="search-input" placeholder="Search by path or description...">
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Start Date</label>
+                <input type="date" id="startDate">
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">End Date</label>
+                <input type="date" id="endDate">
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Group</label>
+                <select id="groupFilter">
+                    <option value="">All Groups</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">&nbsp;</label>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button onclick="applyFilters()">Apply Filters</button>
+                    <button onclick="resetFilters()">Reset</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Total Time Tracked</div>
+                <div class="stat-value" id="totalTime">0h</div>
+                <div class="stat-subtext" id="totalSessions">0 sessions</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">This Week</div>
+                <div class="stat-value" id="weekTime">0h</div>
+                <div class="stat-subtext" id="weekSessions">0 sessions</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Today</div>
+                <div class="stat-value" id="todayTime">0h</div>
+                <div class="stat-subtext" id="todaySessions">0 sessions</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Average Session</div>
+                <div class="stat-value" id="avgSession">0m</div>
+                <div class="stat-subtext" id="longestSession">Longest: 0m</div>
+            </div>
+        </div>
+
+        <div class="charts-grid">
+            <div class="chart-card">
+                <div class="chart-title">Time by Project</div>
+                <div class="chart-container">
+                    <canvas id="projectChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-title">Daily Activity (Last 7 Days)</div>
+                <div class="chart-container">
+                    <canvas id="dailyChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <div class="table-header">
+                <div class="table-title">Recent Sessions</div>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Start Time</th>
+                        <th>Duration</th>
+                        <th>Path</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody id="sessionsTable">
+                    <tr>
+                        <td colspan="4" class="loading">Loading data...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let allData = [];
+        let filteredData = [];
+        let projectChart = null;
+        let dailyChart = null;
+
+        // Load and parse CSV
+        // This function is overridden by Hammerspoon when opening via Cmd+Shift+Esc
+        // Hammerspoon injects the CSV data directly into the page
+        async function loadData() {
+            showError('⚠️ This dashboard should be opened via Hammerspoon (Cmd+Shift+Esc), not directly in browser.');
+        }
+        
+        // Removed: setupFileDrop - not needed since Hammerspoon injects data directly
+
+        // Generate distinct colors using HSL - ensures no duplicates
+        function generateDistinctColors(count) {
+            const colors = [];
+            const goldenRatio = 0.618033988749895;
+            let hue = Math.random(); // Start with random hue
+            
+            for (let i = 0; i < count; i++) {
+                hue += goldenRatio;
+                hue %= 1;
+                
+                // Use high saturation and medium lightness for vibrant colors
+                const h = Math.floor(hue * 360);
+                const s = 65 + Math.random() * 10; // 65-75%
+                const l = 55 + Math.random() * 10; // 55-65%
+                
+                colors.push(`hsl(${h}, ${s}%, ${l}%)`);
+            }
+            
+            return colors;
+        }
+
+        function parseCSVLine(line) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                
+                if (char === '"') {
+                    if (inQuotes && line[i + 1] === '"') {
+                        current += '"';
+                        i++;
+                    } else {
+                        inQuotes = !inQuotes;
+                    }
+                } else if (char === ',' && !inQuotes) {
+                    result.push(current);
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            result.push(current);
+            return result;
+        }
+
+        function showError(message) {
+            const container = document.getElementById('error-container');
+            container.innerHTML = `<div class="error">${message}</div>`;
+        }
+
+        function updateDashboard() {
+            updateStats();
+            updateCharts();
+            updateTable();
+        }
+
+        function updateStats() {
+            const totalMinutes = filteredData.reduce((sum, d) => sum + d.duration, 0);
+            const totalHours = (totalMinutes / 60).toFixed(1);
+            
+            document.getElementById('totalTime').textContent = totalHours + 'h';
+            document.getElementById('totalSessions').textContent = filteredData.length + ' sessions';
+
+            // This week
+            const weekAgo = new Date();
+            weekAgo.setDate(weekAgo.getDate() - 7);
+            const weekData = filteredData.filter(d => new Date(d.startTime) >= weekAgo);
+            const weekMinutes = weekData.reduce((sum, d) => sum + d.duration, 0);
+            document.getElementById('weekTime').textContent = (weekMinutes / 60).toFixed(1) + 'h';
+            document.getElementById('weekSessions').textContent = weekData.length + ' sessions';
+
+            // Today
+            const today = new Date().toDateString();
+            const todayData = filteredData.filter(d => new Date(d.startTime).toDateString() === today);
+            const todayMinutes = todayData.reduce((sum, d) => sum + d.duration, 0);
+            document.getElementById('todayTime').textContent = (todayMinutes / 60).toFixed(1) + 'h';
+            document.getElementById('todaySessions').textContent = todayData.length + ' sessions';
+
+            // Average
+            const avgMinutes = filteredData.length > 0 ? totalMinutes / filteredData.length : 0;
+            document.getElementById('avgSession').textContent = Math.round(avgMinutes) + 'm';
+            
+            const longest = Math.max(...filteredData.map(d => d.duration), 0);
+            document.getElementById('longestSession').textContent = 'Longest: ' + Math.round(longest) + 'm';
+        }
+
+        function updateCharts() {
+            updateProjectChart();
+            updateDailyChart();
+        }
+
+        function updateProjectChart() {
+            const projectTime = {};
+            filteredData.forEach(d => {
+                const topLevel = d.path.split('::')[0];
+                projectTime[topLevel] = (projectTime[topLevel] || 0) + d.duration;
+            });
+
+            const sorted = Object.entries(projectTime)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10);
+
+            const ctx = document.getElementById('projectChart');
+            if (projectChart) projectChart.destroy();
+
+            projectChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: sorted.map(([name]) => name),
+                    datasets: [{
+                        data: sorted.map(([, time]) => (time / 60).toFixed(1)),
+                        backgroundColor: generateDistinctColors(sorted.length)
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: { color: '#a3a3a3' }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => `${context.label}: ${context.parsed}h`
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateDailyChart() {
+            const last7Days = [];
+            for (let i = 6; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                last7Days.push(date.toDateString());
+            }
+
+            const dailyTime = {};
+            last7Days.forEach(day => dailyTime[day] = 0);
+
+            filteredData.forEach(d => {
+                const day = new Date(d.startTime).toDateString();
+                if (dailyTime.hasOwnProperty(day)) {
+                    dailyTime[day] += d.duration;
+                }
+            });
+
+            const ctx = document.getElementById('dailyChart');
+            if (dailyChart) dailyChart.destroy();
+
+            dailyChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: last7Days.map(d => new Date(d).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })),
+                    datasets: [{
+                        label: 'Hours',
+                        data: last7Days.map(day => (dailyTime[day] / 60).toFixed(1)),
+                        backgroundColor: '#3b82f6',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => `${context.parsed.y} hours`
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: '#a3a3a3' },
+                            grid: { color: '#262626' }
+                        },
+                        x: {
+                            ticks: { color: '#a3a3a3' },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateTable() {
+            const tbody = document.getElementById('sessionsTable');
+            if (filteredData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="loading">No data to display</td></tr>';
+                return;
+            }
+
+            const sorted = [...filteredData].sort((a, b) => 
+                new Date(b.startTime) - new Date(a.startTime)
+            ).slice(0, 50);
+
+            tbody.innerHTML = sorted.map(d => `
+                <tr>
+                    <td>${new Date(d.startTime).toLocaleString()}</td>
+                    <td>${Math.round(d.duration)}m</td>
+                    <td><span class="badge">${d.path}</span></td>
+                    <td>${d.description || '-'}</td>
+                </tr>
+            `).join('');
+        }
+
+        function populateGroupFilter() {
+            const groups = [...new Set(allData.map(d => d.path.split('::')[0]))].sort();
+            const select = document.getElementById('groupFilter');
+            select.innerHTML = '<option value="">All Groups</option>' + 
+                groups.map(g => `<option value="${g}">${g}</option>`).join('');
+        }
+
+        function applyFilters() {
+            const search = document.getElementById('search').value.toLowerCase();
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const group = document.getElementById('groupFilter').value;
+
+            filteredData = allData.filter(d => {
+                if (search && !d.path.toLowerCase().includes(search) && 
+                    !d.description.toLowerCase().includes(search)) {
+                    return false;
+                }
+                if (startDate && new Date(d.startTime) < new Date(startDate)) {
+                    return false;
+                }
+                if (endDate && new Date(d.startTime) > new Date(endDate + 'T23:59:59')) {
+                    return false;
+                }
+                if (group && !d.path.startsWith(group)) {
+                    return false;
+                }
+                return true;
+            });
+
+            updateDashboard();
+        }
+
+        function resetFilters() {
+            document.getElementById('search').value = '';
+            document.getElementById('startDate').value = '';
+            document.getElementById('endDate').value = '';
+            document.getElementById('groupFilter').value = '';
+            filteredData = [...allData];
+            updateDashboard();
+        }
+
+        // Real-time search
+        document.getElementById('search').addEventListener('input', applyFilters);
+
+        // Load data on page load
+        loadData();
+    </script>
+</body>
+</html>
+

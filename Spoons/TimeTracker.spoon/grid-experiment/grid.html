@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time Grid - 4 Week View</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Tab Bar -->
+    <div class="tab-bar">
+        <button class="tab-btn active" onclick="switchTab('grid')">📅 Grid</button>
+        <button class="tab-btn" onclick="switchTab('page2')">📊 Page 2</button>
+    </div>
+
+    <!-- Page 1: Grid View -->
+    <div class="page active" id="page-grid">
+        <button class="toggle-panel-btn" onclick="togglePanel()">📋 Tasks</button>
+        
+        <!-- Grid Container -->
+        <div class="container">
+            <!-- Row 1: Weeks 1-2 -->
+            <div class="row">
+                <div class="time-labels" id="timeLabels1"></div>
+                <div class="grid-scroll">
+                    <div class="grid-wrapper" id="grid1"></div>
+                </div>
+            </div>
+            
+            <!-- Row 2: Weeks 3-4 -->
+            <div class="row">
+                <div class="time-labels" id="timeLabels2"></div>
+                <div class="grid-scroll">
+                    <div class="grid-wrapper" id="grid2"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Task Panel (floating overlay) -->
+        <div class="task-panel hidden" id="taskPanel">
+            <div class="task-header">
+                <h2>📋 Tasks</h2>
+                <div class="add-task-form">
+                    <input 
+                        type="text" 
+                        class="add-task-input" 
+                        id="taskInput"
+                        placeholder="Add a new task..."
+                        onkeypress="if(event.key==='Enter') addTask()"
+                    >
+                    <button class="add-btn" onclick="addTask()">+ Add</button>
+                </div>
+            </div>
+
+            <div class="task-list" id="taskList">
+                <div class="empty-task-state">
+                    <div style="font-size: 48px; opacity: 0.5; margin-bottom: 12px;">📝</div>
+                    <div>No tasks yet. Add one above!</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Page 2: New Page -->
+    <div class="page" id="page-page2">
+        <div class="page-content">
+            👋 Hello!
+        </div>
+    </div>
+
+    <div class="tooltip" id="tooltip">
+        <div class="tooltip-time" id="tooltipTime"></div>
+        <div class="tooltip-note" id="tooltipNote"></div>
+    </div>
+
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <div class="modal-header" id="modalHeader"></div>
+            <button class="btn btn-clear" onclick="clearCell()">Clear Cell</button>
+            <textarea id="noteInput" placeholder="Add a note..."></textarea>
+            <button class="btn btn-save" onclick="saveCell()">Save</button>
+        </div>
+    </div>
+
+    <script src="tabs.js"></script>
+    <script src="grid.js"></script>
+    <script src="tasks.js"></script>
+</body>
+</html>
