@@ -16,6 +16,7 @@ package.path = package.path .. ";" .. spoonPath .. "/?.lua"
 local batteryDisplay = require("battery_display")
 local timeParser = require("time_parser")
 local timerManager = require("timer_manager")
+local inputDialog = require("input_dialog")
 
 -- Metadata
 obj.name = "BatteryTimer"
@@ -45,7 +46,7 @@ function obj:updateDisplay(state)
     if state.finished then
         -- Timer finished - combined image with timer on LEFT
         local batteryIcon = batteryDisplay.drawBattery(0, "0:00")
-        self.menubar:setIcon(batteryIcon, true)
+        self.menubar:setIcon(batteryIcon, false)
         
         hs.alert.show("⚡ Battery depleted! Time's up!", 3)
         
@@ -61,7 +62,7 @@ function obj:updateDisplay(state)
         local timeString = timeParser.formatTime(state.remaining)
         local batteryIcon = batteryDisplay.drawBattery(state.percentage, timeString)
         
-        self.menubar:setIcon(batteryIcon, true)
+        self.menubar:setIcon(batteryIcon, false)
     end
 end
 
@@ -81,7 +82,7 @@ function obj:stopTimer()
     
     if self.menubar then
         local batteryIcon = batteryDisplay.drawBattery(0, "0:00")
-        self.menubar:setIcon(batteryIcon, true)
+        self.menubar:setIcon(batteryIcon, false)
         
         -- Remove menu bar after a short delay
         hs.timer.doAfter(2, function()
@@ -109,59 +110,17 @@ function obj:showTimerMenu()
         self.menubar:setMenu(menu)
         self.menubar:popupMenu(hs.mouse.absolutePosition())
     else
-        -- No timer running, show duration options
-        local durations = {15, 30, 45, 60, 90, 120, 180, 240, 360, 480, 600, 720, 960, 1080, 1200, 1440}
-        local menu = {}
-        
-        for _, mins in ipairs(durations) do
-            local label
-            if mins < 60 then
-                label = string.format("%d minutes", mins)
-            else
-                local hours = mins / 60
-                if hours == math.floor(hours) then
-                    label = string.format("%d hour%s", hours, hours > 1 and "s" or "")
-                else
-                    label = string.format("%.1f hours", hours)
-                end
-            end
-            
-            table.insert(menu, {
-                title = label,
-                fn = function()
+        -- No timer running, show custom input dialog with auto-focus
+        inputDialog.show(function(text)
+            if text and text ~= "" then
+                local mins = timeParser.parseTimeInput(text)
+                if mins and mins > 0 then
                     self:startTimer(mins)
-                end
-            })
-        end
-        
-        -- Add custom time option
-        table.insert(menu, {
-            title = "─────────────────"
-        })
-        table.insert(menu, {
-            title = "Custom... (e.g., 90min, 2hr, 45s)",
-            fn = function()
-                local button, text = hs.dialog.textPrompt(
-                    "Enter custom time",
-                    "Examples:\n• 90min\n• 2hr\n• 45s\n• 120 (assumes minutes)",
-                    "",
-                    "Start",
-                    "Cancel"
-                )
-                
-                if button == "Start" and text then
-                    local mins = timeParser.parseTimeInput(text)
-                    if mins and mins > 0 then
-                        self:startTimer(mins)
-                    else
-                        hs.alert.show("⚠️ Invalid time format. Try: 90min, 2hr, or 45s", 3)
-                    end
+                else
+                    hs.alert.show("⚠️ Invalid format. Try: 90min, 2hr, or 45s", 3)
                 end
             end
-        })
-        
-        self.menubar:setMenu(menu)
-        self.menubar:popupMenu(hs.mouse.absolutePosition())
+        end)
     end
 end
 
@@ -181,7 +140,7 @@ function obj:toggle()
         -- Show the menu bar - combined image with timer on LEFT, battery on RIGHT
         self.menubar = hs.menubar.new()
         local batteryIcon = batteryDisplay.drawBattery(100, "--:--")
-        self.menubar:setIcon(batteryIcon, true)
+        self.menubar:setIcon(batteryIcon, false)
         self.menubar:setClickCallback(function()
             self:showTimerMenu()
         end)

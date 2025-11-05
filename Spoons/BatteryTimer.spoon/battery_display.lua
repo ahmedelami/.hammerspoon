@@ -41,12 +41,27 @@ function M.drawBattery(percentage, timeText)
         }
     end
     
-    -- Battery terminal (positive end) - shifted right for timer text
+    -- Determine color based on percentage FIRST
+    -- Colors: Green (100-75%), Yellow (74-40%), Red (39-0%)
+    local batteryColor
+    
+    if percentage >= 75 then
+        batteryColor = {red = 0.2, green = 0.8, blue = 0.2, alpha = 1.0} -- Green
+        print("DEBUG: Drawing battery at " .. percentage .. "% - GREEN")
+    elseif percentage >= 40 then
+        batteryColor = {red = 0.9, green = 0.65, blue = 0.0, alpha = 1.0} -- Darker Yellow/Orange
+        print("DEBUG: Drawing battery at " .. percentage .. "% - YELLOW")
+    else
+        batteryColor = {red = 1.0, green = 0.2, blue = 0.2, alpha = 1.0} -- Red
+        print("DEBUG: Drawing battery at " .. percentage .. "% - RED")
+    end
+    
+    -- Battery terminal (positive end) - shifted right for timer text, BLACK to match border
     local batteryStartX = timeWidth
     canvas[3] = {
         type = "rectangle",
         action = "fill",
-        fillColor = {white = 1.0},
+        fillColor = {white = 0.0, alpha = 1.0},
         roundedRectRadii = {xRadius = 2, yRadius = 2},
         frame = {
             x = batteryStartX + 2,
@@ -56,38 +71,26 @@ function M.drawBattery(percentage, timeText)
         }
     }
     
-    -- Battery body outline - positioned after timer text and terminal
+    -- Battery body outline - stays BLACK
     canvas[4] = {
         type = "rectangle",
         action = "stroke",
-        strokeColor = {white = 1.0},
+        strokeColor = {white = 0.0, alpha = 1.0},
         strokeWidth = 2,
         roundedRectRadii = {xRadius = 3, yRadius = 3},
         frame = {x = batteryStartX + TERMINAL_WIDTH + 2, y = 2, w = BATTERY_WIDTH, h = BATTERY_HEIGHT}
     }
     
-    -- Battery fill (color changes based on percentage)
-    -- User wants: XXXXXX -> [empty]XX -> [empty][empty]X
+    -- Battery fill - same color as outline
     -- Fill stays on RIGHT, empty grows from LEFT
     local fillWidth = (BATTERY_WIDTH - 8) * (percentage / 100)
-    local fillColor
-    
-    if percentage > 60 then
-        fillColor = {red = 0.3, green = 0.8, blue = 0.3} -- Green
-    elseif percentage > 30 then
-        fillColor = {red = 1.0, green = 0.8, blue = 0.0} -- Yellow/Orange
-    else
-        fillColor = {red = 1.0, green = 0.3, blue = 0.3} -- Red
-    end
-    
-    -- RIGHT EDGE IS FIXED, LEFT EDGE MOVES RIGHT AS IT SHRINKS
     local rightEdgeX = batteryStartX + TERMINAL_WIDTH + 6 + (BATTERY_WIDTH - 8)
     local fillStartX = rightEdgeX - fillWidth
     
     canvas[5] = {
         type = "rectangle",
         action = "fill",
-        fillColor = fillColor,
+        fillColor = batteryColor,
         roundedRectRadii = {xRadius = 2, yRadius = 2},
         frame = {x = fillStartX, y = 6, w = fillWidth, h = BATTERY_HEIGHT - 8}
     }
