@@ -25,6 +25,10 @@ spoon.TimeTracker:start()
 hs.loadSpoon("idle_alarm")
 spoon.idle_alarm:start()
 
+-- Battery Timer with Ctrl+Alt+B
+spoon.BatteryTimer = dofile(hs.configdir .. "/Spoons/BatteryTimer.spoon/init.lua")
+spoon.BatteryTimer:start()
+
 -- ============== DONE ==============
 
 hs.alert.show("🔄 Hammerspoon Config Loaded", 2)
