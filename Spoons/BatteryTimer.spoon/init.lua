@@ -45,7 +45,7 @@ function obj:updateDisplay(state)
     if state.finished then
         -- Timer finished
         local batteryIcon = batteryDisplay.drawBattery(0)
-        self.menubar:setTitle("0:00")
+        self.menubar:setTitle("0:00 ")
         self.menubar:setIcon(batteryIcon, true)
         
         hs.alert.show("⚡ Battery depleted! Time's up!", 3)
@@ -58,11 +58,11 @@ function obj:updateDisplay(state)
             end
         end)
     else
-        -- Timer running - update display
-        local batteryIcon = batteryDisplay.drawBattery(state.percentage)
+        -- Timer running - timer on left, battery on right
         local timeString = timeParser.formatTime(state.remaining)
+        local batteryIcon = batteryDisplay.drawBattery(state.percentage)
         
-        self.menubar:setTitle(timeString)
+        self.menubar:setTitle(timeString .. " ")
         self.menubar:setIcon(batteryIcon, true)
     end
 end
@@ -83,7 +83,7 @@ function obj:stopTimer()
     
     if self.menubar then
         local batteryIcon = batteryDisplay.drawBattery(0)
-        self.menubar:setTitle("0:00")
+        self.menubar:setTitle("0:00 ")
         self.menubar:setIcon(batteryIcon, true)
         
         -- Remove menu bar after a short delay
@@ -181,10 +181,10 @@ function obj:toggle()
         end
         hs.alert.show("⚡ Battery timer hidden", 1)
     else
-        -- Show the menu bar
+        -- Show the menu bar - timer on left, battery on right
         self.menubar = hs.menubar.new()
         local batteryIcon = batteryDisplay.drawBattery(100)
-        self.menubar:setTitle("--:--")
+        self.menubar:setTitle("--:-- ")
         self.menubar:setIcon(batteryIcon, true)
         self.menubar:setClickCallback(function()
             self:showTimerMenu()
