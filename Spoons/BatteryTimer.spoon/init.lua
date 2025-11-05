@@ -144,7 +144,9 @@ function obj:toggle()
         self.menubar:setClickCallback(function()
             self:showTimerMenu()
         end)
-        hs.alert.show("⚡ Battery timer ready - click to set time", 2)
+        
+        -- Immediately show the input dialog
+        self:showTimerMenu()
     end
 end
 
