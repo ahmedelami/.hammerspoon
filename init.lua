@@ -27,6 +27,7 @@ spoon.idle_alarm:start()
 
 -- Battery Timer with Ctrl+Alt+B
 spoon.BatteryTimer = dofile(hs.configdir .. "/Spoons/BatteryTimer.spoon/init.lua")
+spoon.BatteryTimer:init()
 spoon.BatteryTimer:start()
 
 -- ============== DONE ==============

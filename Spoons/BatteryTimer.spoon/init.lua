@@ -43,9 +43,8 @@ function obj:updateDisplay(state)
     if not self.menubar then return end
     
     if state.finished then
-        -- Timer finished
-        local batteryIcon = batteryDisplay.drawBattery(0)
-        self.menubar:setTitle("0:00 ")
+        -- Timer finished - combined image with timer on LEFT
+        local batteryIcon = batteryDisplay.drawBattery(0, "0:00")
         self.menubar:setIcon(batteryIcon, true)
         
         hs.alert.show("⚡ Battery depleted! Time's up!", 3)
@@ -58,11 +57,10 @@ function obj:updateDisplay(state)
             end
         end)
     else
-        -- Timer running - timer on left, battery on right
+        -- Timer running - combined image with timer on LEFT, battery on RIGHT
         local timeString = timeParser.formatTime(state.remaining)
-        local batteryIcon = batteryDisplay.drawBattery(state.percentage)
+        local batteryIcon = batteryDisplay.drawBattery(state.percentage, timeString)
         
-        self.menubar:setTitle(timeString .. " ")
         self.menubar:setIcon(batteryIcon, true)
     end
 end
@@ -82,8 +80,7 @@ function obj:stopTimer()
     self.timerManager:stop()
     
     if self.menubar then
-        local batteryIcon = batteryDisplay.drawBattery(0)
-        self.menubar:setTitle("0:00 ")
+        local batteryIcon = batteryDisplay.drawBattery(0, "0:00")
         self.menubar:setIcon(batteryIcon, true)
         
         -- Remove menu bar after a short delay
@@ -181,10 +178,9 @@ function obj:toggle()
         end
         hs.alert.show("⚡ Battery timer hidden", 1)
     else
-        -- Show the menu bar - timer on left, battery on right
+        -- Show the menu bar - combined image with timer on LEFT, battery on RIGHT
         self.menubar = hs.menubar.new()
-        local batteryIcon = batteryDisplay.drawBattery(100)
-        self.menubar:setTitle("--:-- ")
+        local batteryIcon = batteryDisplay.drawBattery(100, "--:--")
         self.menubar:setIcon(batteryIcon, true)
         self.menubar:setClickCallback(function()
             self:showTimerMenu()
