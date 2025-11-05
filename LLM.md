@@ -74,10 +74,14 @@ This repository uses **Git worktrees**, which creates a confusing dual-directory
 ### Spoon not loading after reload
 **Symptom**: After editing a spoon and reloading Hammerspoon, the spoon doesn't work.
 
+**Common Cause**: `init.lua` was NOT copied to production directory!
+
 **Solution**:
-1. Verify the file was copied to `/Users/ahmedelamin/.hammerspoon/`
-2. Check if init.lua has the load command
-3. Manually reload the spoon:
+1. **First, verify init.lua was copied**: `grep "SpoonName" /Users/ahmedelamin/.hammerspoon/init.lua`
+2. If missing, copy it: `cp init.lua /Users/ahmedelamin/.hammerspoon/init.lua`
+3. Verify spoon files were copied to `/Users/ahmedelamin/.hammerspoon/Spoons/`
+4. Reload: `hs -c "hs.reload()"`
+5. If still not working, manually load:
    ```bash
    hs -c "spoon.SpoonName = dofile(hs.configdir .. '/Spoons/SpoonName.spoon/init.lua'); spoon.SpoonName:start()"
    ```
@@ -87,7 +91,10 @@ This repository uses **Git worktrees**, which creates a confusing dual-directory
 
 **Cause**: You edited the worktree copy but didn't copy to production.
 
-**Solution**: Always copy changes from worktree to `/Users/ahmedelamin/.hammerspoon/`
+**Solution**: Always copy **ALL** changed files from worktree to `/Users/ahmedelamin/.hammerspoon/`
+- If you changed a Spoon → copy the Spoon
+- If you changed init.lua → copy init.lua  
+- If you changed BOTH → copy BOTH (don't forget!)
 
 ## 🤖 Instructions for AI Assistants
 
@@ -95,9 +102,13 @@ When asked to edit Hammerspoon configuration:
 
 1. **Always edit files in THIS directory** (the worktree)
 2. **Always copy changes to** `/Users/ahmedelamin/.hammerspoon/`
+   - ⚠️ **CRITICAL**: If you modify `init.lua`, you MUST copy it to production!
+   - ⚠️ **CRITICAL**: If you modify any Spoon files, you MUST copy them to production!
+   - **Don't forget BOTH**: Spoon files AND init.lua if both changed
 3. **Always reload** after making changes
 4. **If spoon doesn't load**, use manual `dofile` method
 5. **Remember**: The worktree is for git, the home directory is for execution
+6. **Verify your work**: After copying, confirm the spoon loads with `hs -c "if spoon.SpoonName then print('Success') end"`
 
 ### Quick Command Reference
 ```bash
