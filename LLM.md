@@ -86,6 +86,41 @@ This repository uses **Git worktrees**, which creates a confusing dual-directory
    hs -c "spoon.SpoonName = dofile(hs.configdir .. '/Spoons/SpoonName.spoon/init.lua'); spoon.SpoonName:start()"
    ```
 
+### Changes not appearing even after copying files
+**Symptom**: You copied new files and reloaded, but the behavior hasn't changed at all.
+
+**Common Cause**: **Lua module caching!** When a spoon uses `require()` to load modules, Lua caches them in `package.loaded`. Even if you update the files, `require()` returns the cached version.
+
+**Solution - Clear the module cache**:
+```bash
+hs -c "
+-- Clear module cache for the spoon
+package.loaded['module_name'] = nil
+
+-- Then reload the spoon
+if spoon.SpoonName then spoon.SpoonName:stop() end
+spoon.SpoonName = dofile(hs.configdir .. '/Spoons/SpoonName.spoon/init.lua')
+spoon.SpoonName:init()
+spoon.SpoonName:start()
+"
+```
+
+**Example for BatteryTimer**:
+```bash
+hs -c "
+package.loaded['battery_display'] = nil
+package.loaded['timer_manager'] = nil
+package.loaded['time_parser'] = nil
+
+if spoon.BatteryTimer then spoon.BatteryTimer:stop() end
+spoon.BatteryTimer = dofile(hs.configdir .. '/Spoons/BatteryTimer.spoon/init.lua')
+spoon.BatteryTimer:init()
+spoon.BatteryTimer:start()
+"
+```
+
+**Pro tip**: If you're not sure which modules to clear, just do a full `hs.reload()` from Hammerspoon GUI - it clears all caches.
+
 ### Changes not taking effect
 **Symptom**: You edit a file but nothing changes.
 
