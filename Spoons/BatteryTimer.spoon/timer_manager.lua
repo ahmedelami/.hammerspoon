@@ -10,7 +10,8 @@ function M.new()
         startTime = nil,
         duration = nil,  -- duration in seconds
         timer = nil,
-        updateCallback = nil
+        updateCallback = nil,
+        flashState = false  -- tracks odd/even seconds for flashing
     }
     
     --- Start the timer
@@ -45,6 +46,9 @@ function M.new()
         local elapsed = os.time() - self.startTime
         local remaining = self.duration - elapsed
         
+        -- Toggle flash state every second
+        self.flashState = not self.flashState
+        
         if remaining <= 0 then
             -- Timer finished
             self:stop()
@@ -52,7 +56,8 @@ function M.new()
                 self.updateCallback({
                     finished = true,
                     remaining = 0,
-                    percentage = 0
+                    percentage = 0,
+                    flashState = false
                 })
             end
             return
@@ -64,7 +69,8 @@ function M.new()
             self.updateCallback({
                 finished = false,
                 remaining = remaining,
-                percentage = percentage
+                percentage = percentage,
+                flashState = self.flashState
             })
         end
     end

@@ -30,6 +30,14 @@ spoon.BatteryTimer = dofile(hs.configdir .. "/Spoons/BatteryTimer.spoon/init.lua
 spoon.BatteryTimer:init()
 spoon.BatteryTimer:start()
 
+-- Menu Bar Text with Ctrl+Alt+J
+hs.loadSpoon("MenuBarText")
+spoon.MenuBarText:start()
+
+-- Continuous Sound with Ctrl+Shift+S
+hs.loadSpoon("ContinuousSound")
+spoon.ContinuousSound:start()
+
 -- ============== DONE ==============
 
 hs.alert.show("🔄 Hammerspoon Config Loaded", 2)
