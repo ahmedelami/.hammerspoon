@@ -54,7 +54,7 @@ local function ensureBorderCanvas(self)
   local screen = hs.screen.mainScreen()
   if not screen then return end
 
-  local frame = screen:fullFrame()
+  local frame = screen:frame()
   local borderWidth = self.borderWidth or 36
   local inset = (borderWidth / 2)
 
@@ -63,13 +63,6 @@ local function ensureBorderCanvas(self)
     y = frame.y,
     w = frame.w,
     h = frame.h
-  }
-
-  local shapeFrame = {
-    x = inset,
-    y = inset,
-    w = math.max(0, frame.w - borderWidth),
-    h = math.max(0, frame.h - borderWidth)
   }
 
   local corner = (self.cornerRadius or 28)
@@ -96,18 +89,24 @@ local function ensureBorderCanvas(self)
   local canvas = hs.canvas.new(canvasFrame)
   canvas:level(hs.canvas.windowLevels.overlay)
   canvas:behavior(hs.canvas.windowBehaviors.canJoinAllSpaces)
+  canvas:clickActivating(false)
 
   canvas[1] = {
     type = "rectangle",
     action = "fill",
-    frame = {x = 0, y = 0, w = frame.w, h = frame.h},
+    frame = {x = 0, y = 0, w = canvasFrame.w, h = canvasFrame.h},
     fillColor = {alpha = 0}
   }
 
   local baseStroke = {
     type = "rectangle",
     action = "stroke",
-    frame = shapeFrame,
+    frame = {
+      x = inset,
+      y = inset,
+      w = math.max(0, canvasFrame.w - borderWidth),
+      h = math.max(0, canvasFrame.h - borderWidth)
+    },
     roundedRectRadii = {xRadius = corner, yRadius = corner},
     compositeRule = "plusLighter",
     strokeCapStyle = "round",
@@ -133,7 +132,7 @@ local function ensureBorderCanvas(self)
   canvas:hide()
   self._borderCanvas = canvas
   self._borderCanvasMeta = {
-    canvasFrame = canvasFrame,
+    canvasFrame = hs.fnutils.copy(canvasFrame),
     borderWidth = borderWidth,
     corner = corner
   }
