@@ -35,6 +35,7 @@ function M.new()
         
         -- Initial update
         self:update()
+        
     end
     
     --- Update the timer state
@@ -46,8 +47,8 @@ function M.new()
         local elapsed = os.time() - self.startTime
         local remaining = self.duration - elapsed
         
-        -- Toggle flash state every second
-        self.flashState = not self.flashState
+        -- Keep flash state false (disable flashing)
+        self.flashState = false
         
         if remaining <= 0 then
             -- Timer finished
@@ -64,17 +65,17 @@ function M.new()
         end
         
         local percentage = (remaining / self.duration) * 100
-        
+        local state = {
+            finished = false,
+            remaining = remaining,
+            percentage = percentage,
+            flashState = self.flashState
+        }
         if self.updateCallback then
-            self.updateCallback({
-                finished = false,
-                remaining = remaining,
-                percentage = percentage,
-                flashState = self.flashState
-            })
+            self.updateCallback(state)
         end
     end
-    
+
     --- Stop the timer
     function tm:stop()
         if self.timer then
@@ -95,4 +96,3 @@ function M.new()
 end
 
 return M
-
